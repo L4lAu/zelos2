@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("usuario");
   const [showPassword, setShowPassword] = useState(false);
@@ -13,9 +13,9 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
 
   const validate = () => {
-    if (!email || !password) return "Preencha e-mail e senha.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "E-mail inválido.";
-    if (!email.endsWith("@senai.br")) return "Use seu e-mail institucional (@senai.br).";
+    if (!id || !password) return "Preencha ID e senha.";
+    if (!/^\d+$/.test(id)) return "O ID deve conter apenas números.";
+    if (id.length < 5) return "O ID deve ter pelo menos 5 dígitos.";
     if (password.length < 6) return "A senha deve ter pelo menos 6 caracteres.";
     return null;
   };
@@ -28,27 +28,45 @@ export default function LoginPage() {
       setError(v);
       return;
     }
+
     try {
       setLoading(true);
-      await new Promise((res) => setTimeout(res, 700));
+
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // precisa se credentials: true no backend
+        body: JSON.stringify({ id, senha: '123456' })
+      });
+      
+      
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Falha ao autenticar");
+      }
+
+      // Se o back retorna a role, usamos ela
+      const userRole = data.role || role;
 
       const destination =
-        role === "adm"
+        userRole === "adm"
           ? "/dashboard/adm"
-          : role === "tecnico"
+          : userRole === "tecnico"
           ? "/tecnico/dashboard"
           : "/usuario/dashboard";
 
       router.push(destination);
     } catch (err) {
-      setError("Erro ao autenticar.");
+      setError(err.message || "Erro ao autenticar.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-red-500 via-black to-red-500  text-white">
       <div className="w-full max-w-md">
         <div className="bg-zinc-900/80 backdrop-blur rounded-2xl shadow-2xl border border-zinc-800 overflow-hidden">
           <div className="bg-red-700/90 px-6 py-5">
@@ -57,48 +75,25 @@ export default function LoginPage() {
               <div className="h-6 w-px bg-white/60" />
               <h1 className="text-lg sm:text-xl font-semibold">Acesso ao Sistema</h1>
             </div>
-            <p className="text-white/80 text-sm mt-1">Faça login com seu e-mail institucional</p>
+            <p className="text-white/80 text-sm mt-1">Faça login com seu ID</p>
           </div>
 
           <form onSubmit={onSubmit} className="px-6 py-6 space-y-5">
             <div>
-              <label className="block text-sm mb-2 text-white/90">Tipo de usuário</label>
-              <div className="grid grid-cols-3 gap-2">
-                {["usuario", "tecnico", "adm"].map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className={
-                      "rounded-xl px-3 py-2 text-sm border transition " +
-                      (role === r
-                        ? "bg-red-600 border-red-500"
-                        : "bg-zinc-800 hover:bg-zinc-700 border-zinc-700")
-                    }
-                  >
-                    {r === "usuario" && "Usuário"}
-                    {r === "tecnico" && "Técnico"}
-                    {r === "adm" && "Administrador"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm mb-1 text-white/90">E-mail institucional</label>
+              <label htmlFor="id" className="block text-sm mb-1">ID</label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nome.sobrenome@senai.br"
-                className="w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 py-2 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
+                id="id"
+                type="text"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                placeholder="Digite seu ID numérico"
+                className="w-full rounded-xl bg-white border border-zinc-700 px-3 py-2 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm mb-1 text-white/90">Senha</label>
+              <label htmlFor="password" className="block text-sm mb-1">Senha</label>
               <div className="relative">
                 <input
                   id="password"
@@ -106,13 +101,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl bg-zinc-900 border border-zinc-700 px-3 py-2 pr-12 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
+                  className="w-full rounded-xl bg-white border border-zinc-700 px-3 py-2 pr-12 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 px-3 text-sm text-white/70 hover:text-white"
+                  className="absolute inset-y-0 right-0 px-3 text-sm text-black "
                 >
                   {showPassword ? "Ocultar" : "Mostrar"}
                 </button>

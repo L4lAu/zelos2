@@ -4,11 +4,11 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/jwt.js';
 
 export async function login(req, res) {
-  const { email, senha } = req.body;
+  const { id, senha } = req.body;
 
-  if (!email || !senha) return res.status(400).json({ message: 'Email e senha obrigatórios' });
+  if (!id || !senha) return res.status(400).json({ message: 'ID e senha obrigatórios' });
 
-  const user = await read('usuarios', `email='${email}'`);
+  const user = await read('usuarios', `id=${id}`);
   if (!user) return res.status(401).json({ message: 'Usuário não encontrado' });
 
   const senhaValida = await bcrypt.compare(senha, user.senha_hash);
