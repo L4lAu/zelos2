@@ -4,14 +4,14 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/jwt.js';
 
 export async function login(req, res) {
-  const { id, senha } = req.body;
+  const { username, password } = req.body;
 
-  if (!id || !senha) return res.status(400).json({ message: 'ID e senha obrigatórios' });
+  if (!username || !password) return res.status(400).json({ message: 'Username e password obrigatórios' });
 
-  const user = await read('usuarios', `id=${id}`);
+  const user = await read('usuarios', `username='${username}'`);
   if (!user) return res.status(401).json({ message: 'Usuário não encontrado' });
 
-  const senhaValida = await bcrypt.compare(senha, user.senha_hash);
+  const senhaValida = await bcrypt.compare(password, user.senha_hash);
   if (!senhaValida) return res.status(401).json({ message: 'Senha incorreta' });
 
   const token = jwt.sign({ id: user.id, nome: user.nome, tipo: user.tipo }, JWT_SECRET, { expiresIn: '8h' });

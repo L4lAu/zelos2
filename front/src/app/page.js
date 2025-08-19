@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [id, setId] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("usuario");
   const [showPassword, setShowPassword] = useState(false);
@@ -13,10 +13,9 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
 
   const validate = () => {
-    if (!id || !password) return "Preencha ID e senha.";
-    if (!/^\d+$/.test(id)) return "O ID deve conter apenas números.";
-    if (id.length < 5) return "O ID deve ter pelo menos 5 dígitos.";
-    if (password.length < 6) return "A senha deve ter pelo menos 6 caracteres.";
+    if (!username || !password) return "Preencha username e password.";
+    if (username.length < 3) return "O username deve ter pelo menos 3 caracteres.";
+    if (password.length < 6) return "O password deve ter pelo menos 6 caracteres.";
     return null;
   };
 
@@ -32,14 +31,12 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // precisa se credentials: true no backend
-        body: JSON.stringify({ id, senha: '123456' })
+      const response = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, password }),
       });
-      
-      
 
       const data = await response.json();
 
@@ -47,7 +44,6 @@ export default function LoginPage() {
         throw new Error(data.message || "Falha ao autenticar");
       }
 
-      // Se o back retorna a role, usamos ela
       const userRole = data.role || role;
 
       const destination =
@@ -66,7 +62,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-red-500 via-black to-red-500  text-white">
+    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-r from-red-500 via-black to-red-500 text-white">
       <div className="w-full max-w-md">
         <div className="bg-zinc-900/80 backdrop-blur rounded-2xl shadow-2xl border border-zinc-800 overflow-hidden">
           <div className="bg-red-700/90 px-6 py-5">
@@ -75,25 +71,25 @@ export default function LoginPage() {
               <div className="h-6 w-px bg-white/60" />
               <h1 className="text-lg sm:text-xl font-semibold">Acesso ao Sistema</h1>
             </div>
-            <p className="text-white/80 text-sm mt-1">Faça login com seu ID</p>
+            <p className="text-white/80 text-sm mt-1">Faça login com seu username</p>
           </div>
 
           <form onSubmit={onSubmit} className="px-6 py-6 space-y-5">
             <div>
-              <label htmlFor="id" className="block text-sm mb-1">ID</label>
+              <label htmlFor="username" className="block text-sm mb-1">Username</label>
               <input
-                id="id"
+                id="username"
                 type="text"
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                placeholder="Digite seu ID numérico"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Digite seu username"
                 className="w-full rounded-xl bg-white border border-zinc-700 px-3 py-2 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm mb-1">Senha</label>
+              <label htmlFor="password" className="block text-sm mb-1">Password</label>
               <div className="relative">
                 <input
                   id="password"
@@ -107,7 +103,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 px-3 text-sm text-black "
+                  className="absolute inset-y-0 right-0 px-3 text-sm text-black"
                 >
                   {showPassword ? "Ocultar" : "Mostrar"}
                 </button>
