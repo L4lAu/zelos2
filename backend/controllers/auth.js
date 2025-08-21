@@ -13,7 +13,9 @@ export async function login(req, res) {
 
   const senhaValida = await bcrypt.compare(password, user.senha_hash);
   if (!senhaValida) return res.status(401).json({ message: 'Senha incorreta' });
+  console.log()
 
   const token = jwt.sign({ id: user.id, nome: user.nome, tipo: user.tipo }, JWT_SECRET, { expiresIn: '8h' });
   res.json({ token, tipo: user.tipo });
 }
+

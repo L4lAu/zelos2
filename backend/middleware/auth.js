@@ -1,21 +1,22 @@
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/jwt.js';
+import { JWT_SECRET } from '../config/jwt.js'; // Importar a chave secreta
 
-export function authMiddleware(roles = []) {
-  return (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ message: 'Token não fornecido' });
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-    const token = authHeader.split(' ')[1];
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      if (roles.length && !roles.includes(decoded.tipo)) {
-        return res.status(403).json({ message: 'Sem permissão' });
-      }
-      req.user = decoded;
-      next();
-    } catch {
-      return res.status(403).json({ message: 'Token inválido ou expirado' });
-    }
-  };
-}
+  if (!authHeader) {
+    return res.status(401).json({ mensagem: 'Não autorizado: Token não fornecido' });
+  }
+
+  const [ , token] = authHeader.split(' ');
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.usuarioId = decoded.id;
+    next();
+  } catch (error) {
+    return res.status(403).json({ mensagem: 'Não autorizado: Token inválido' });
+  }
+};
+
+export default authMiddleware;

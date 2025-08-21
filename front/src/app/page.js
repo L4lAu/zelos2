@@ -3,59 +3,59 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+
 export default function LoginPage() {
-  const router = useRouter();
+  const router = useRouter(); // Hook do Next.js para navegação
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("usuario");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const validate = () => {
-    if (!username || !password) return "Preencha username e password.";
-    if (username.length < 3) return "O username deve ter pelo menos 3 caracteres.";
-    if (password.length < 6) return "O password deve ter pelo menos 6 caracteres.";
-    return null;
-  };
+  // A URL da sua API deve vir de uma variável de ambiente
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    const v = validate();
-    if (v) {
-      setError(v);
+
+    // Validação simples do lado do cliente
+    if (!username || !password) {
+      setError("Por favor, preencha o usuário e a senha.");
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+    try {
+      // Usando a variável de ambiente para a URL
+      console.log(`Enviando para: ${API_URL}/auth/login`);
+      console.log(`Payload:`, JSON.stringify({ username, password }));
+
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        credentials: "include", // ESSENCIAL para sessões e CORS
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Falha ao autenticar");
+        // Usa a mensagem de erro do backend, se disponível
+        throw new Error(data.error || `Erro ${response.status}: Falha na autenticação`);
       }
 
-      const userRole = data.role || role;
+      // Se o login for bem-sucedido
+      console.log("Login bem-sucedido:", data);
+      
+      // Redireciona para o dashboard usando o useRouter
+      // Substitua '/dashboard' pela sua rota protegida
+      router.push("/dashboard"); 
 
-      const destination =
-        userRole === "adm"
-          ? "/dashboard/adm"
-          : userRole === "tecnico"
-          ? "/tecnico/dashboard"
-          : "/usuario/dashboard";
-
-      router.push(destination);
     } catch (err) {
-      setError(err.message || "Erro ao autenticar.");
+      // Exibe o erro para o usuário
+      setError(err.message);
+      console.error("Erro no fetch:", err);
     } finally {
       setLoading(false);
     }
@@ -71,12 +71,12 @@ export default function LoginPage() {
               <div className="h-6 w-px bg-white/60" />
               <h1 className="text-lg sm:text-xl font-semibold">Acesso ao Sistema</h1>
             </div>
-            <p className="text-white/80 text-sm mt-1">Faça login com seu username</p>
+            <p className="text-white/80 text-sm mt-1">Faça login com seu usuario</p>
           </div>
 
           <form onSubmit={onSubmit} className="px-6 py-6 space-y-5">
             <div>
-              <label htmlFor="username" className="block text-sm mb-1">Username</label>
+              <label htmlFor="username" className="block text-sm mb-1">Usuario</label>
               <input
                 id="username"
                 type="text"
@@ -93,20 +93,12 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   id="password"
-                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full rounded-xl bg-white border border-zinc-700 px-3 py-2 pr-12 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/30"
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 px-3 text-sm text-black"
-                >
-                  {showPassword ? "Ocultar" : "Mostrar"}
-                </button>
               </div>
             </div>
 
