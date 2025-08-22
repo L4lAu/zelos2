@@ -7,10 +7,11 @@ const ldapOptions = {
     url: 'ldap://10.189.87.7:389',
     bindDN: 'cn=script,ou=Funcionarios,ou=Usuarios123,dc=educ123,dc=sp,dc=senai,dc=br',
     bindCredentials: '7GFGOy4ATCiqW9c86eStgCe0RA9BgA',
-    searchBase: 'ou=Alunos,ou=Usuarios123,dc=educ123,dc=sp,dc=senai,dc=br',
+    searchBase: 'ou=Alunos,ou=Usuarios123,dc=educ123,dc=sp,dc=senai,dc=br', //Alterar de funcionarios para aluno, apoio paiva
     searchFilter: '(sAMAccountName={{username}})'
   }
 };
+
 
 passport.use(new LdapStrategy(ldapOptions, (user, done) => {
   if (!user) {

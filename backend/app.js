@@ -2,8 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
 import dotenv from 'dotenv';
-import authRotas from './routes/auth.js';
+import authRotas from './routes/authRoutes.js';
 import passport from './config/ldap.js';
+import authMiddleware from './middleware/authmiddleware.js';
+import routeChamados from './routes/chamados.js'
+import routeApontamentos from './routes/apontamentos.js'
 
 
 
@@ -54,6 +57,10 @@ try {
 
 // 5. Rotas
 app.use('/auth', authRotas);
+app.use('/chamados', routeChamados);
+app.use('/apontamentos', routeApontamentos);
+
+
 
 app.get('/api/equipamentos/filtrar', (req, res) => {
     const { query } = req.query;
