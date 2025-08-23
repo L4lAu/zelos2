@@ -1,5 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/authmiddleware.js';
+import authMiddleware from '../middleware/authmiddleware.js';
 import { listarApontamentos, criarApontamento } from '../controllers/apontamentos.js';
 
 const router = express.Router();
