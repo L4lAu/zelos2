@@ -6,8 +6,8 @@ export default function Sidebar({ activePage, userType, onNavigate }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { id: "chamados", name: "Meus Chamados", href: "/tecnico", icon: "📋" },
-    { id: "disponiveis", name: "Chamados Disponíveis", href: "/tecnico/disponiveis", icon: "🔍" },
+    { id: "chamados", name: "Meus Chamados", icon: "📋" },
+    { id: "historico", name: "Histórico de Chamados", icon: "🔍" },
   ];
 
   const handleNavigation = (href) => {
@@ -47,12 +47,14 @@ export default function Sidebar({ activePage, userType, onNavigate }) {
               <li key={item.id}>
                 <div
                   className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200
-                    ${
-                      activePage === item.id
-                        ? "bg-red-600 text-white font-semibold shadow"
-                        : "text-black hover:bg-red-100"
+                    ${activePage === item.id
+                      ? "bg-red-600 text-white font-semibold shadow"
+                      : "text-black hover:bg-red-100"
                     }`}
-                  onClick={() => handleNavigation(item.href)}
+                    
+                  onClick={() => {
+                    handleNavigation(item.id);
+                  }}
                 >
                   <span className="mr-3 text-xl">{item.icon}</span>
                   <span className="text-base md:text-lg">{item.name}</span>
