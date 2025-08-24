@@ -4,12 +4,13 @@ import session from 'express-session';
 import dotenv from 'dotenv';
 import authRotas from './routes/authRoutes.js';
 import passport from './config/ldap.js';
-import authMiddleware from './middleware/authmiddleware.js';
+import authMiddleware from './middleware/authMiddleware.js';
 import routeChamados from './routes/chamadosRoutes.js'
 import routeApontamentos from './routes/apontamentosRoutes.js'
 import routeRelatorios from './routes/relatorioRoutes.js';
 import routeTecnicos from './routes/tecnicoRoutes.js';
 import { decryptRequestBody, encryptResponseData } from './middleware/encryptionMiddleware.js';
+import routeEquipamentos from './routes/equipamentosRoutes.js';
 
 
 
@@ -64,6 +65,7 @@ app.use('/chamados', routeChamados);
 app.use('/apontamentos', routeApontamentos);
 app.use('/relatorios', routeRelatorios);
 app.use('/tecnicos', routeTecnicos);
+app.use('/equipamentos', routeEquipamentos);
 app.use(decryptRequestBody);
 app.use(encryptResponseData);
 

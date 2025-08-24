@@ -2,101 +2,99 @@ import express from 'express';
 import passport from '../config/ldap.js';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/jwt.js';
+import { read, create } from '../config/database.js';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
-// Rota de Login
+// Rota de Login com LDAP + JWT
 router.post('/login', (req, res, next) => {
-    // Middleware de autenticação com tratamento de erros
-    passport.authenticate('ldapauth', { session: true }, (err, user, info) => {
-        try {
-            if (err) {
-                console.error('Erro na autenticação:', err);
-                return res.status(500).json({ error: 'Erro interno no servidor' });
-            }
+  passport.authenticate('ldapauth', { session: false }, async (err, user, info) => {
+    try {
+      if (err) {
+        console.error('Erro na autenticação LDAP:', err);
+        return res.status(500).json({ error: 'Erro interno no servidor' });
+      }
 
-            if (!user) {
-                console.warn('Falha na autenticação:', info?.message || 'Credenciais inválidas');
-                console.log('Body recebido:', req.body);
-                return res.status(401).json({ error: info?.message || 'Autenticação falhou' });
-            }
-            
-            // Loga o usuário manualmente para garantir a sessão
-            req.logIn(user, (loginErr) => {
-                if (loginErr) {
-                    console.error('Erro ao criar sessão:', loginErr);
-                    return res.status(500).json({ error: 'Erro ao criar sessão' });
-                }
-                
-                // Dentro do req.logIn callback:
-                const token = jwt.sign(
-                    {
-                        id: user.username,
-                        username: user.username,
-                        email: user.mail
-                    },
-                    JWT_SECRET,
-                    { expiresIn: '8h' }
-                );
-                
-                console.log('Body recebido:', user);
-                return res.json({
-                    message: 'Autenticado com sucesso',
-                    token, // ← AGORA RETORNA O TOKEN
-                    user: {
-                        username: user.username,
-                        displayName: user.displayName,
-                        email: user.mail
-                    }
-                });
-            });
-        } catch (error) {
-            console.error('Erro inesperado:', error);
-            res.status(500).json({ error: 'Erro inesperado no servidor' });
+      if (!user) {
+        return res.status(401).json({ error: info?.message || 'Credenciais inválidas' });
+      }
+
+      // Verificar se usuário existe no banco local, se não, criar
+      let localUser = await read('usuarios', `username='${user.sAMAccountName}'`);
+      
+      if (!localUser) {
+        // Criar usuário local baseado no LDAP
+        const novoSenhaHash = await bcrypt.hash('senha_temporaria', 12);
+        
+        localUser = {
+          username: user.sAMAccountName,
+          nome: user.displayName || user.cn,
+          email: user.mail,
+          senha_hash: novoSenhaHash,
+          tipo: 'usuario', // Tipo padrão
+          ativo: true,
+          criado_em: new Date()
+        };
+
+        const userId = await create('usuarios', localUser);
+        localUser.id = userId;
+      }
+
+      // Gerar token JWT com dados do usuário
+      const token = jwt.sign(
+        {
+          id: localUser.id,
+          username: localUser.username,
+          nome: localUser.nome,
+          email: localUser.email,
+          tipo: localUser.tipo
+        },
+        JWT_SECRET,
+        { expiresIn: '8h' }
+      );
+
+      res.json({
+        message: 'Autenticado com sucesso',
+        token,
+        user: {
+          id: localUser.id,
+          username: localUser.username,
+          nome: localUser.nome,
+          email: localUser.email,
+          tipo: localUser.tipo
         }
-    })(req, res, next);
+      });
+
+    } catch (error) {
+      console.error('Erro no processo de login:', error);
+      res.status(500).json({ error: 'Erro interno no servidor' });
+    }
+  })(req, res, next);
 });
 
-// Rota de Logout
+// Logout (para JWT)
 router.post('/logout', (req, res) => {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: 'Nenhum usuário autenticado' });
-    }
-
-    console.log('Usuário deslogando:', req.user?.username);
-
-    req.logout((err) => {
-        if (err) {
-            console.error('Erro no logout:', err);
-            return res.status(500).json({ error: 'Erro ao realizar logout' });
-        }
-
-        // Destrói a sessão completamente
-        req.session.destroy((destroyErr) => {
-            if (destroyErr) {
-                console.error('Erro ao destruir sessão:', destroyErr);
-                return res.status(500).json({ error: 'Erro ao encerrar sessão' });
-            }
-
-            res.clearCookie('connect.sid'); // Remove o cookie de sessão
-            res.json({ message: 'Logout realizado com sucesso' });
-        });
-    });
+  res.json({ message: 'Logout realizado com sucesso' });
 });
 
-// Rota para verificar autenticação
+// Verificar autenticação
 router.get('/check-auth', (req, res) => {
-    if (req.isAuthenticated()) {
-        return res.json({
-            authenticated: true,
-            user: {
-                username: req.user.username,
-                displayName: req.user.displayName
-            }
-        });
-    }
-    console.log('Usuário autenticado:', user.username);
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ authenticated: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json({
+      authenticated: true,
+      user: decoded
+    });
+  } catch (error) {
     res.status(401).json({ authenticated: false });
+  }
 });
 
 export default router;

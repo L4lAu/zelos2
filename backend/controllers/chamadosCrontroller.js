@@ -10,13 +10,40 @@ export async function listarChamados(req, res) {
 }
 
 export async function criarChamado(req, res) {
-  const { patrimonio, descricao, tipo } = req.body;
-  const chamadoExistente = await read('chamados', `patrimonio='${patrimonio}' AND tipo='${tipo}' AND status='aberto'`);
-  if (chamadoExistente) {
-    return res.status(400).json({ error: 'Já existe um chamado aberto para este patrimônio e tipo' });
+  try {
+    const { patrimonio, descricao, tipo } = req.body;
+
+    // ✅ VALIDAR SE PATRIMÔNIO EXISTE
+    const equipamento = await read('equipamentos', `patrimonio = '${patrimonio}'`);
+    if (!equipamento) {
+      return res.status(400).json({ error: 'Patrimônio não encontrado' });
+    }
+
+    if (equipamento.status !== 'ativo') {
+      return res.status(400).json({ error: 'Equipamento não está disponível para chamados' });
+    }
+
+    // Verificar se já existe chamado aberto para este patrimônio+tipo
+    const chamadoExistente = await read('chamados', `patrimonio='${patrimonio}' AND tipo='${tipo}' AND status='aberto'`);
+    if (chamadoExistente) {
+      return res.status(400).json({ error: 'Já existe um chamado aberto para este patrimônio e tipo' });
+    }
+
+    const novoId = await create('chamados', { 
+      id_usuario: req.user.id, 
+      patrimonio, 
+      descricao, 
+      tipo, 
+      status: 'aberto', 
+      criado_em: new Date() 
+    });
+
+    res.json({ id: novoId });
+
+  } catch (error) {
+    console.error('Erro ao criar chamado:', error);
+    res.status(500).json({ error: 'Erro interno no servidor' });
   }
-  const novoId = await create('chamados', { id_usuario: req.user.id, patrimonio, descricao, tipo, status: 'aberto', criado_em: new Date() });
-  res.json({ id: novoId });
 }
 
 export async function atualizarChamado(req, res) {
