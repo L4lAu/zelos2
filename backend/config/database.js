@@ -1,3 +1,4 @@
+import { encrypt } from '../utils/encryption.js';
 import mysql from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
@@ -18,19 +19,23 @@ async function getConnection() {
 }
 
 // Função para ler todos os registros
-async function readAll(table, where = null) {
-    const connection = await getConnection();
-    try {
-        let sql = `SELECT * FROM ${table}`;
-        if (where) {
-            sql += ` WHERE ${where}`;
-        }
-
-        const [rows] = await connection.execute(sql);
-        return rows;
-    } finally {
-        connection.release();
+async function readAll(table, where = null, values = []) {
+  const connection = await getConnection();
+  try {
+    let sql = `SELECT * FROM ${table}`;
+    
+    if (where) {
+      sql += ` WHERE ${where}`;
     }
+
+    const [rows] = values.length > 0 
+      ? await connection.execute(sql, values)
+      : await connection.execute(sql);
+      
+    return rows;
+  } finally {
+    connection.release();
+  }
 }
 
 // Função para ler um registro específico
@@ -116,6 +121,27 @@ async function compare(senha, hash) {
         console.error('Erro ao comparar a senha com o hash:', error);
         return false; // Em caso de erro, retorne falso para indicar que a senha não corresponde
     }
+}
+
+
+
+async function findEncrypted(table, field, value) {
+  const encryptedValue = encrypt(value);
+  return await read(table, `${field} = '${encryptedValue}'`);
+}
+
+async function readAllEncrypted(table, field, values) {
+  const encryptedValues = values.map(value => encrypt(value));
+  const placeholders = encryptedValues.map(() => '?').join(',');
+  
+  const connection = await getConnection();
+  try {
+    const sql = `SELECT * FROM ${table} WHERE ${field} IN (${placeholders})`;
+    const [rows] = await connection.execute(sql, encryptedValues);
+    return rows;
+  } finally {
+    connection.release();
+  }
 }
 
 export { create, readAll, read, update, deleteRecord, compare };

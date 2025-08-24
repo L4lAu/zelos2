@@ -6,7 +6,10 @@ import authRotas from './routes/authRoutes.js';
 import passport from './config/ldap.js';
 import authMiddleware from './middleware/authmiddleware.js';
 import routeChamados from './routes/chamadosRoutes.js'
-import routeApontamentos from './routes/apontamentos.js'
+import routeApontamentos from './routes/apontamentosRoutes.js'
+import routeRelatorios from './routes/relatorioRoutes.js';
+import routeTecnicos from './routes/tecnicoRoutes.js';
+import { decryptRequestBody, encryptResponseData } from './middleware/encryptionMiddleware.js';
 
 
 
@@ -59,27 +62,44 @@ try {
 app.use('/auth', authRotas);
 app.use('/chamados', routeChamados);
 app.use('/apontamentos', routeApontamentos);
+app.use('/relatorios', routeRelatorios);
+app.use('/tecnicos', routeTecnicos);
+app.use(decryptRequestBody);
+app.use(encryptResponseData);
 
 
+// Rota melhorada para busca de equipamentos
+app.get('/api/equipamentos/filtrar', async (req, res) => {
+  try {
+    const { query, tipo, localizacao } = req.query;
 
-app.get('/api/equipamentos/filtrar', (req, res) => {
-    const { query } = req.query;
+    if (!query || query.length < 4) {
+      return res.status(400).json({ error: 'Query deve ter pelo menos 4 caracteres' });
+    }
 
-    // if (!query || query.length < 4) {
-    //   return res.status(400).json({ error: 'Query deve ter pelo menos 4 caracteres' });
-    // }
+    let whereConditions = [`CAST(patrimonio AS CHAR) LIKE '%${query}%'`];
+    let values = [];
 
-    const sql = `SELECT * FROM equipamentos WHERE CAST(patrimonio AS CHAR) LIKE ?`;
-    const values = [`${query}%`];
+    // Filtros opcionais
+    if (tipo) {
+      whereConditions.push('tipo = ?');
+      values.push(tipo);
+    }
 
-    db.query(sql, values, (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar equipamentos:', err);
-            return res.status(500).json({ error: 'Erro ao buscar equipamentos' });
-        }
+    if (localizacao) {
+      whereConditions.push('localizacao LIKE ?');
+      values.push(`%${localizacao}%`);
+    }
 
-        res.json(results);
-    });
+    const whereClause = whereConditions.join(' AND ');
+    const equipamentos = await readAll('equipamentos', whereClause, values);
+
+    res.json(equipamentos);
+
+  } catch (error) {
+    console.error('Erro ao buscar equipamentos:', error);
+    res.status(500).json({ error: 'Erro interno ao buscar equipamentos' });
+  }
 });
 
 app.get('/health', (req, res) => {
