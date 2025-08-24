@@ -6,12 +6,12 @@ import {
   criarChamado,
   atualizarChamado,
   fecharChamado
-} from '../controllers/chamados.js';
+} from '../controllers/chamadosCrontroller.js';
 
 const router = express.Router();
 
-router.get('/', authMiddleware(['usuario','tecnico','adm']), listarChamados);
-router.post('/', authMiddleware(['usuario']), criarChamado);
+router.get('/listar', authMiddleware(['usuario','tecnico','adm']), listarChamados);
+router.post('/doChamado', authMiddleware(['usuario']), criarChamado);
 router.put('/:id', authMiddleware(['tecnico','adm']), atualizarChamado);
 router.put('/:id/fechar', authMiddleware(['tecnico','adm']), fecharChamado);
 

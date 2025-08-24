@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import authRotas from './routes/authRoutes.js';
 import passport from './config/ldap.js';
 import authMiddleware from './middleware/authmiddleware.js';
-import routeChamados from './routes/chamados.js'
+import routeChamados from './routes/chamadosRoutes.js'
 import routeApontamentos from './routes/apontamentos.js'
 
 
