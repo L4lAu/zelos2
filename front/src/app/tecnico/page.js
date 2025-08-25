@@ -1,6 +1,7 @@
   "use client";
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
+import Cookies from 'js-cookie';
 
 // Componentes
 import Header from "../components/Header";
@@ -10,17 +11,6 @@ import ApontamentoModal from "../components/tecnico/ApontamentoModal";
 import HistoricoChamados from "../components/tecnico/HistoricoChamados";
 
 
-// Dados mock
-const mockChamados = [
-  { id: 1, patrimonio: "PAT-001", descricaoProblema: "Computador não liga", tipo: "Manutenção", status: "aberto", dataCriacao: "2024-01-15T10:30:00", tecnicoId: null },
-  { id: 2, patrimonio: "PAT-002", descricaoProblema: "Projetor com imagem tremida", tipo: "Apoio Técnico", status: "em_andamento", dataCriacao: "2024-01-14T14:20:00", tecnicoId: 1 },
-  { id: 3, patrimonio: "PAT-003", descricaoProblema: "Cadeira com rodinha quebrada", tipo: "Manutenção", status: "aguardando_aprovacao", dataCriacao: "2024-01-13T09:15:00", tecnicoId: 1 },
-  { id: 4, patrimonio: "PAT-004", descricaoProblema: "Instalação de software", tipo: "Apoio Técnico", status: "concluido", dataCriacao: "2024-01-12T16:45:00", tecnicoId: 5 },
-  { id: 5, patrimonio: "PAT-005", descricaoProblema: "Monitor apresentando tela azul com frequência", tipo: "Manutenção", status: "aberto", dataCriacao: "2024-01-15T10:30:00", tecnicoId: null },
-  { id: 6, patrimonio: "PAT-006", descricaoProblema: "Impressora não está puxando papel corretamente", tipo: "Apoio Técnico", status: "em_andamento", dataCriacao: "2024-01-14T14:20:00", tecnicoId: 1 },
-  { id: 7, patrimonio: "PAT-007", descricaoProblema: "Mesa com parafusos soltos causando instabilidade", tipo: "Manutenção", status: "aguardando_aprovacao", dataCriacao: "2024-01-13T09:15:00", tecnicoId: 4 },
-  { id: 8, patrimonio: "PAT-008", descricaoProblema: "Atualização de sistema operacional pendente", tipo: "Apoio Técnico", status: "concluido", dataCriacao: "2024-01-12T16:45:00", tecnicoId: 1 }
-];
 
 
 export default function TecnicoPage() {
@@ -29,23 +19,52 @@ export default function TecnicoPage() {
   const [chamados, setChamados] = useState([]);
   const [chamadosFiltrados, setChamadosFiltrados] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedChamado, setSelectedChamado] = useState(null);
-  const [showApontamentoModal, setShowApontamentoModal] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Carregar chamados
-  useEffect(() => {
-    const fetchChamados = async () => {
-      setLoading(true);
-      await new Promise(res => setTimeout(res, 1000));
-      setChamados(mockChamados);
-      setLoading(false);
-    };
-    fetchChamados();
-  }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+  
+        const token = Cookies.get('token'); // pegar token do cookie
+  
+        // Buscar dados do usuário
+        const userRes = await fetch('http://localhost:8080/auth/me', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (!userRes.ok) throw new Error('Erro ao buscar usuário');
+        const userData = await userRes.json();
+        setUser(userData); // substituir o estado fixo do user
+  
+        // Buscar chamados
+        const chamadosRes = await fetch('http://localhost:8080/chamados/listar', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (!chamadosRes.ok) throw new Error('Erro ao buscar chamados');
+        const chamadosData = await chamadosRes.json();
+        setChamados(chamadosData);
+  
+      } catch (error) {
+        console.error('Erro ao buscar dados do back-end:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
+  
   // Filtragem
   useEffect(() => {
     let resultado = chamados;

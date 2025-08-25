@@ -1,5 +1,5 @@
 import express from 'express';
-import authMiddleware from '../middleware/authMiddleware.js';
+import authMiddleware from '../middleware/authmiddleware.js';
 import { validarApontamento } from '../middleware/validacaoApontamentos.js';
 import { 
   listarApontamentos, 
@@ -11,10 +11,10 @@ import {
 
 const router = express.Router();
 
-router.get('/:chamadoId', authMiddleware(['tecnico', 'adm', 'usuario']), listarApontamentos);
-router.post('/:chamadoId', authMiddleware(['tecnico']), validarApontamento, criarApontamento);
-router.put('/:apontamentoId', authMiddleware(['tecnico']), atualizarApontamento);
-router.patch('/:apontamentoId/finalizar', authMiddleware(['tecnico']), finalizarApontamento);
-router.get('/estatisticas/tempo', authMiddleware(['tecnico', 'adm']), obterEstatisticasTempo);
+router.get('/:chamadoId', authMiddleware.withRole(['tecnico', 'adm', 'usuario']), listarApontamentos);
+router.get('/:chamadoId/listar', authMiddleware.withRole(['tecnico', 'adm', 'usuario']), listarApontamentos);
+router.put('/:apontamentoId', authMiddleware.withRole(['tecnico']), atualizarApontamento);
+router.patch('/:apontamentoId/finalizar', authMiddleware.withRole(['tecnico']), finalizarApontamento);
+router.get('/estatisticas/tempo', authMiddleware.withRole(['tecnico', 'adm']), obterEstatisticasTempo);
 
 export default router;

@@ -32,13 +32,13 @@ export default function LoginPage() {
   const redirectBasedOnUserType = (userType) => {
     switch (userType?.toLowerCase()) {
       case "admin":
-        router.push(`/dashboard/admin`);
+        router.push(`/admin`);
         break;
       case "tecnico":
-        router.push(`/dashboard/tecnico`);
+        router.push(`/tecnico`);
         break;
       case "usuario":
-        router.push(`/dashboard/usuario`);
+        router.push(`/usuario`);
         break;
       default:
         setError("Tipo de usuário não reconhecido");
@@ -78,7 +78,7 @@ export default function LoginPage() {
       if (userType) {
         redirectBasedOnUserType(userType);
       } else {
-        router.push(`/dashboard/${userType}`);
+        router.push(`/${userType}`);
       }
 
     } catch (err) {

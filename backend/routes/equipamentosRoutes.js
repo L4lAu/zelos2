@@ -1,5 +1,5 @@
 import express from 'express';
-import authMiddleware from '../middleware/authMiddleware.js';
+import authMiddleware from '../middleware/authmiddleware.js';
 import {
   listarEquipamentos,
   buscarEquipamento,
@@ -11,10 +11,10 @@ import {
 const router = express.Router();
 
 // Apenas administradores podem gerenciar equipamentos
-router.get('/', authMiddleware(['adm', 'tecnico']), listarEquipamentos);
-router.get('/:patrimonio', authMiddleware(['adm', 'tecnico', 'usuario']), buscarEquipamento);
-router.post('/', authMiddleware(['adm']), criarEquipamento);
-router.put('/:id', authMiddleware(['adm']), atualizarEquipamento);
-router.delete('/:id', authMiddleware(['adm']), deletarEquipamento);
+router.get('/', authMiddleware.withRole(['adm', 'tecnico']), listarEquipamentos);
+router.get('/:patrimonio', authMiddleware.withRole(['adm', 'tecnico', 'usuario']), buscarEquipamento);
+router.post('/', authMiddleware.withRole(['adm']), criarEquipamento);
+router.put('/:id', authMiddleware.withRole(['adm']), atualizarEquipamento);
+router.delete('/:id', authMiddleware.withRole(['adm']), deletarEquipamento);
 
 export default router;

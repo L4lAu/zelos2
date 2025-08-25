@@ -4,7 +4,7 @@ import session from 'express-session';
 import dotenv from 'dotenv';
 import authRotas from './routes/authRoutes.js';
 import passport from './config/ldap.js';
-import authMiddleware from './middleware/authMiddleware.js';
+import authMiddleware from './middleware/authmiddleware.js';
 import routeChamados from './routes/chamadosRoutes.js'
 import routeApontamentos from './routes/apontamentosRoutes.js'
 import routeRelatorios from './routes/relatorioRoutes.js';
@@ -106,6 +106,11 @@ app.get('/api/equipamentos/filtrar', async (req, res) => {
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'online' });
+});
+
+
+app.get('/auth/me', authMiddleware.withRole(['usuario','tecnico','adm']), (req, res) => {
+  res.json(req.user); // req.user preenchido pelo authMiddleware
 });
 
 

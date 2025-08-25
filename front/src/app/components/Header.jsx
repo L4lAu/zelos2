@@ -20,11 +20,11 @@ export default function Header({ user, onLogout }) {
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 <span className="text-sm font-medium text-white">
-                  {user.nome}
+                  {user.username}
                 </span>
                 <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
                   <span className="text-red-600 text-sm font-semibold">
-                    {user.nome.charAt(0).toUpperCase()}
+                    {user.username.charAt(0).toUpperCase()}
                   </span>
                 </div>
               </button>
